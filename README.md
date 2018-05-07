@@ -3,7 +3,7 @@
 ### strip_comments
 
 ```
-$ ./strip_comments/main < code.c
+$ cd strip_comments && gcc main.c && a.out < main.c
 ```
 
 Strips a code file passed through stdin of comments, passing it to stdout as it is processed.
