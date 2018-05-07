@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 void handle_line(char **, int *);
 void handle_char(char, char, char *, int *, int *, int *);
 
