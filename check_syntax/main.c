@@ -1,13 +1,13 @@
 #include <stdio.h>
 
 struct syntax {
-	int sqt;
-	int dqt;
-	int par;
-	int brc;
-	int brk;
-	int bcmt;
-	int lcmt; 
+	int sqt;	// open single quotes?
+	int dqt;	// open double quotes?
+	int par;	// open parentheses
+	int brc;	// open braces
+	int brk;	// open brackets
+	int bcmt;	// in a block comment?
+	int lcmt; 	// in a line comment?
 };
 
 void handle_char(char *, struct syntax *);
@@ -59,7 +59,7 @@ void handle_char(char *cur, struct syntax *syn)
 
 	switch(*cur) {
 	case '\'':
-		syn->sqt = !syn->sqt;
+		syn->sqt = syn->dqt ? syn->sqt : !syn->sqt;
 		break;
 	case '"':
 		syn->dqt = syn->sqt ? syn->dqt : !syn->dqt;
@@ -89,6 +89,4 @@ void handle_char(char *cur, struct syntax *syn)
 		syn->brk--;
 		break;
 	}
-
-	putchar(*cur);
 }
