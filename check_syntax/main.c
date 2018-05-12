@@ -1,62 +1,94 @@
 #include <stdio.h>
 
-struct comment {
-	int line;
-	int block;
+struct syntax {
+	int sqt;
+	int dqt;
+	int par;
+	int brc;
+	int brk;
+	int bcmt;
+	int lcmt; 
 };
 
-struct walker {
-	char cur;
-	char prev;
-	char next;
-};
-
-void handle_line(char **, struct comment *);
-void handle_char(struct walker *, struct comment *);
+void handle_char(char *, struct syntax *);
+void handle_line(char **, struct syntax *);
 
 int main()
 {
-	struct comment cmt = { 0, 0 };
+	struct syntax syn = { 0, 0, 0, 0, 0, 0, 0 };
 
 	size_t n = 0;
 	char *buf = 0;
 
 	while (getline(&buf, &n, stdin) != EOF)
-		handle_line(&buf, &cmt);
+		handle_line(&buf, &syn);
+
+	printf("\nsqt: %d, dqt: %d, par: %d, brc: %d, brk: %d\n",
+		syn.sqt, syn.dqt, syn.par, syn.brc, syn.brk);
 }
 
-void handle_line(char **line, struct comment *cmt)
+void handle_line(char **line, struct syntax *syn)
 {
-	char cur;
+	char *walker;
 	char *ln = *line;
 
-	while ((cur = *ln++) != 0) {
-		struct walker step = { cur, *ln - 2, *ln };
-
-		handle_char(&step, &cmt);
-	}
+	while (*(walker = ln++) != 0)
+		handle_char(walker, syn);
 }
 
-void handle_char(struct walker *step, struct comment *cmt)
+void handle_char(char *cur, struct syntax *syn)
 {
-	if (step->prev == '\\')
+	if (*(cur - 1) == '\\' && *(cur - 2) != '\\')
 		return;
 
-	if (step->cur == '/' && step->next == '*')
-		cmt->block = 1;
-	if (step->cur == '*' && step->next == '/')
-		cmt->block = 0;
+	if (*cur == '/' && *(cur + 1) == '*')
+		syn->bcmt = 1;
+	if (*(cur - 2) == '*' && *(cur - 1) == '/')
+		syn->bcmt = 0;
 
-	if (cmt->block)
+	if (syn->bcmt)
 		return;
 
-	if (step->cur == '/' && step->next == '/')
-		cmt->line = 1;
-	if (cmt->line && step->cur == '\n')
-		cmt->line = 0;
+	if (*cur == '/' && *(cur + 1) == '/')
+		syn->lcmt = 1;
+	if (syn->lcmt && *cur == '\n')
+		syn->lcmt = 0;
 
-	if (cmt->line)
+	if (syn->lcmt)
 		return;
 
-	putchar(cmt->line);
+	switch(*cur) {
+	case '\'':
+		syn->sqt = !syn->sqt;
+		break;
+	case '"':
+		syn->dqt = syn->sqt ? syn->dqt : !syn->dqt;
+		break;
+	}
+
+	if (syn->sqt || syn->dqt)
+		return;
+
+	switch(*cur) {
+	case '(':
+		syn->par++;
+		break;
+	case ')':
+		syn->par--;
+		break;
+	case '{':
+		syn->brc++;
+		break;
+	case '}':
+		syn->brc--;
+		break;
+	case '[':
+		syn->brk++;
+		break;
+	case ']':
+		syn->brk--;
+		break;
+	}
+
+	putchar(*cur);
 }
