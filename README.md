@@ -11,3 +11,9 @@ Strips a code file passed through stdin of comments, passing it to stdout as it 
 **Exercise 1-24**
 
 Checks a C code file for rudimentary syntax erros like unmatched parentheses, brackets and braces.
+
+### find_substr
+
+**Exercise 2-5**
+
+Relevant function: `any(char *base, char *sub)`. Returns the index of the string `sub` within `base`, or -1 if it was not found.
