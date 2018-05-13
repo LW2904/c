@@ -10,7 +10,9 @@ Strips a code file passed through stdin of comments, passing it to stdout as it 
 
 **Exercise 1-24**
 
-Checks a C code file for rudimentary syntax erros like unmatched parentheses, brackets and braces.
+Checks a C code file for rudimentary syntax errors like unmatched parentheses, brackets and braces.
+
+Since the checks are performed at such a basic level, this will work for a number of languages with syntax similar to C.
 
 ### find_substr
 
