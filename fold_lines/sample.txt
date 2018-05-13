@@ -1,0 +1,1 @@
+This is a rather long line which will be used to test the functionality of the fold_line function(s) for correctness. In order to properly evaluate the full state of operation this line will need to be rather long.
