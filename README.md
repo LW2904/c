@@ -27,3 +27,9 @@ Since the checks are performed at such a basic level, this will work for a numbe
 **Exercise 2-5**
 
 Relevant function: `int any(char *base, char *sub)`. Returns the index of the string `sub` within `base`, or -1 if it was not found.
+
+### basic_calculator
+
+**Chapter 4.3**
+
+Simple calculator using reverse Polish notation.
