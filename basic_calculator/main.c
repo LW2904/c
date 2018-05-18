@@ -7,8 +7,10 @@
 
 double pop(void);
 void push(double);
+
 int getch(void);
 void ungetch(int);
+
 int getop(char *);
 
 int main()
@@ -29,6 +31,13 @@ int main()
 			op2 = pop();
 			push(pop() - op2);
 			break;
+		case '*':
+			push(pop() * pop());
+			break;
+		case '/':
+			op2 = pop();
+			push(pop() / op2);
+			break;
 		case '\n':
 			printf("\t%.8g\n", pop()); 
 			break;
@@ -42,7 +51,7 @@ int main()
 int getop(char s[])
 {
 	int i, c;
-	
+
 	while ((*s = c = getch()) == ' ' || c == '\t')
 		;
 
@@ -52,11 +61,11 @@ int getop(char s[])
 		return c;
 
 	if (isdigit(c))
-		while (isdigit(*(++s) = c = getch()))
+		while (isdigit(*++s = c = getch()))
  			;
 
 	if (c == '.')
-		while (isdigit(*(++s) = c = getch()))
+		while (isdigit(*++s = c = getch()))
 			;
 
 	*s = '\0';
@@ -75,7 +84,7 @@ int getch(void)
 	return (bufp > 0) ? buf[--bufp] : getchar();
 }
 
-void ungetch(int c)
+void ungetch(const int c)
 {
 	if (bufp >= BUFSIZE)
 		return (void) printf("ungetch: buffer full\n");
@@ -86,7 +95,7 @@ void ungetch(int c)
 int stackp = 0;
 double stack[BUFSIZE];
 
-void push(double i)
+void push(const double i)
 {
 	if (stackp > BUFSIZE)
 		return (void) printf("push: stack full\n");
