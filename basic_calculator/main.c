@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define ISNUM '0'
 #define BUFSIZE 100
 
-double pop(void);
-void push(double);
-
 int getch(void);
 void ungetch(int);
+
+double pop(void);
+void push(double);
 
 int getop(char *);
 
@@ -38,6 +39,15 @@ int main()
 			op2 = pop();
 			push(pop() / op2);
 			break;
+		case '^':
+		case 'pow':
+			op2 = pop();
+			push(pow(pop(), op2));
+			break;
+		case 'rt':
+			op2 = pop();
+			push(pow(pop(), 1 / op2));
+			break;
 		case '\n':
 			printf("\t%.8g\n", pop()); 
 			break;
@@ -59,11 +69,9 @@ int getop(char s[])
 
 	if (!isdigit(c) && c != '.')
 		return c;
-
 	if (isdigit(c))
 		while (isdigit(*++s = c = getch()))
- 			;
-
+			;
 	if (c == '.')
 		while (isdigit(*++s = c = getch()))
 			;
