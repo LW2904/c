@@ -1,5 +1,7 @@
 # c
 
+Exercises are taken from the book "The C Programming Language" by K&R, but may be slightly altered in some ways.
+
 ### fold_lines
 
 **Exercise 1-22**
