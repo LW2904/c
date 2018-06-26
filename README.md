@@ -37,3 +37,7 @@ Relevant function: `int any(char *base, char *sub)`. Returns the index of the st
 **Chapter 4.3**
 
 Simple calculator using reverse Polish notation.
+
+### check_pid
+
+Checks if a process with an ID given through the `-p` flag exists.
