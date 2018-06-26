@@ -1,5 +1,7 @@
 # c
 
+A number of little C programs created mostly to learn the language. Most of them are portable but some require GCC and Linux.
+
 Exercises are taken from the book "The C Programming Language" by K&R, but may be slightly altered in some ways.
 
 ### fold_lines
