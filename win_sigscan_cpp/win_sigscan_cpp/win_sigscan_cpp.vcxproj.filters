@@ -23,10 +23,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="win_sigscan_cpp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win_sigscan_cpp.cpp">
+    <ClCompile Include="stdafx.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
