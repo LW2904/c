@@ -4,41 +4,86 @@
 #include <tlhelp32.h>
 #include <inttypes.h>
 
+#define DEBUG true
 #define READ_SIZE 4096
 #define SIGNATURE "\xDB\x5D\xE8\x8B\x45\xE8\xA3"
 
 unsigned long get_process_id(const char *name);
-
-DWORD find_time_address(HANDLE *process);
-DWORD find_pattern(HANDLE *process, const unsigned char *signature);
+void *find_pattern(HANDLE *process, const unsigned char *signature);
+inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size);
 
 int main()
 {
-	DWORD game_proc_id;
-	if (!(game_proc_id = get_process_id("osu!.exe"))) {
+	DWORD proc_id;
+	if (!(proc_id = get_process_id("osu!.exe"))) {
 		printf("error: couldn't find process");
 		return EXIT_FAILURE;
 	}
 		
-	printf("found process with id %ld\n", game_proc_id);
+	printf("found process with id %ld\n", proc_id);
 
-	HANDLE game_proc = NULL;
-	if (!(game_proc = OpenProcess(PROCESS_VM_READ, 0, game_proc_id))) {
+	HANDLE proc = NULL;
+	if (!(proc = OpenProcess(PROCESS_VM_READ, 0, proc_id))) {
 		printf("error: failed to get handle to process\n");
 		return EXIT_FAILURE;
 	}
 
 	printf("got handle to process\n");
 
-	DWORD time_address = NULL;
-	if (!(time_address = find_time_address(&game_proc))) {
-		printf("error: couldn't get address\n");
-		return EXIT_FAILURE;
-	}
+	void *addr = find_pattern(proc, SIGNATURE);
 
-	printf("got time address %#x\n", time_address);
+	printf("found address: %#x", (unsigned long)addr);
 
 	return 0;
+}
+
+void *find_pattern(HANDLE *process, const unsigned char *signature)
+{
+	bool hit = false;
+	const size_t read_size = 4096;
+	const size_t signature_size = sizeof(signature);
+
+	unsigned char chunk[read_size];
+
+	// Get chunks of reasonable size from process memory.
+	for (size_t i = 0; i < INT_MAX; i += read_size - signature_size) {
+		if (rpm(process, (void *)i, &chunk, read_size) != read_size) {
+			printf("failed reading %#x\n", (unsigned long)i);
+
+			continue;
+		}
+
+		// Iterate over chunk...
+		for (size_t j = 0; a < read_size; j++) {
+			hit = true;
+
+			printf("%#x ", chunk[j]);
+
+			// ...to check if a part of it matches the signature.
+			for (size_t k = 0; k < signature_size && hit; k++) {
+				if (signature[k] != chunk[j + k]) {
+					hit = false;
+				}
+			}
+
+			if (hit) {
+				return (void *)(i + j);
+			}
+		}
+	}
+
+	return NULL;
+}
+
+inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size)
+{
+	size_t read = 0;
+
+	if (!(ReadProcessMemory(proc, addr, chunk, size, &read))) {
+		printf("ReadProcessMemory error: %d\n", GetLastError());
+	}
+
+	return read;
 }
 
 unsigned long get_process_id(const char *name)
@@ -65,48 +110,4 @@ end:
 	CloseHandle(proc_list);
 
 	return proc_id;
-}
-
-DWORD find_pattern(HANDLE *process, const unsigned char *signature)
-{
-	const size_t signature_size = sizeof(signature);
-	const size_t read_size = 4096;
-	bool hit = false;
-
-	unsigned char chunk[read_size];
-
-	for (size_t i = 0; i < INT_MAX; i += read_size - signature_size) {
-		if (!ReadProcessMemory(*process, (LPCVOID)i, &chunk, read_size, NULL)) {
-			//printf("%d\n", GetLastError());
-			continue;
-		}
-
-		for (size_t a = 0; a < read_size; a++) {
-			hit = true;
-
-			for (size_t j = 0; j < signature_size && hit; j++) {
-				if (chunk[a + j] != signature[j]) {
-					hit = false;
-				}
-			}
-
-			if (hit) {
-				return (i + a);
-			}
-		}
-	}
-
-	return NULL;
-}
-
-DWORD find_time_address(HANDLE *process)
-{
-	DWORD time_address = NULL;
-	DWORD time_address_ptr = find_pattern(process, (PBYTE)SIGNATURE) + sizeof(SIGNATURE) - 1;
-
-	if (!ReadProcessMemory(*process, (LPCVOID)(intptr_t)time_address_ptr, &time_address, sizeof(DWORD), NULL)) {
-		return NULL;
-	}
-
-	return time_address;
 }
