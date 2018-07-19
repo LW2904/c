@@ -2,7 +2,11 @@
 
 A number of little C programs created mostly to learn the language. Most of them are portable but some require GCC and Linux.
 
-Exercises are taken from the book "The C Programming Language" by K&R, but may be slightly altered in some ways.
+Folders prefixed with `osu_` are related to the game [osu!](osu.ppy.sh/).
+
+Folders prefixed with `win_` rely in the Windows API, anything else can be compiled with [MinGW](http://mingw.org/) or regular GCC.
+
+Some of the folders contain solved exercises from the book "The C Programming Language" by K&R, these are listed below. Some of them have been altered slightly.
 
 ### fold_lines
 
