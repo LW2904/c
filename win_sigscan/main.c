@@ -4,13 +4,12 @@
 #include <tlhelp32.h>
 #include <inttypes.h>
 
-#define DEBUG true
 #define READ_SIZE 4096
 #define SIGNATURE "\xDB\x5D\xE8\x8B\x45\xE8\xA3"
 
 unsigned long get_process_id(const char *name);
-void *find_pattern(HANDLE *process, const unsigned char *signature);
-inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size);
+void *find_pattern(HANDLE *process, char *signature);
+static inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size);
 
 int main()
 {
@@ -32,18 +31,18 @@ int main()
 
 	void *addr = find_pattern(proc, SIGNATURE);
 
-	printf("found address: %#x", (unsigned long)addr);
+	printf("found address: %#x", (unsigned)(intptr_t)addr);
 
 	return 0;
 }
 
-void *find_pattern(HANDLE *process, const unsigned char *signature)
+void *find_pattern(HANDLE *process, char *signature)
 {
 	bool hit = false;
 	const size_t read_size = 4096;
 	const size_t signature_size = sizeof(signature);
 
-	unsigned char chunk[read_size];
+	int8_t *chunk = (int8_t *)malloc(read_size);
 
 	// Get chunks of reasonable size from process memory.
 	for (size_t i = 0; i < INT_MAX; i += read_size - signature_size) {
@@ -54,7 +53,7 @@ void *find_pattern(HANDLE *process, const unsigned char *signature)
 		}
 
 		// Iterate over chunk...
-		for (size_t j = 0; a < read_size; j++) {
+		for (size_t j = 0; j < read_size; j++) {
 			hit = true;
 
 			printf("%#x ", chunk[j]);
@@ -67,7 +66,7 @@ void *find_pattern(HANDLE *process, const unsigned char *signature)
 			}
 
 			if (hit) {
-				return (void *)(i + j);
+				return (void *)(i + j + signature_size);
 			}
 		}
 	}
@@ -75,12 +74,12 @@ void *find_pattern(HANDLE *process, const unsigned char *signature)
 	return NULL;
 }
 
-inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size)
+static inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size)
 {
 	size_t read = 0;
 
 	if (!(ReadProcessMemory(proc, addr, chunk, size, &read))) {
-		printf("ReadProcessMemory error: %d\n", GetLastError());
+		printf("ReadProcessMemory error: %d\n", (int)GetLastError());
 	}
 
 	return read;
