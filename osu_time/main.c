@@ -5,8 +5,11 @@
 #include <inttypes.h>
 
 #define TIME_ADDRESS 0x00A859EC 	// TimeAddress
-#define TIME_ADDRESS_PTR 0x0683CBF6	// P->TimeAddress
+#define TIME_ADDRESS_PTR 0x0683CBF6 + 1	// P->TimeAddress
 
+#define TIME_PTR_SIGNATURE "\xDB\x5D\xE8\x8B\x45\xE8\xA3"
+
+void *find_address(unsigned char* signature);
 unsigned long get_process_id(const char *name);
 static inline size_t rpm(void *addr, void *chunk, size_t size);
 
@@ -30,17 +33,22 @@ int main()
 
 	printf("got handle to process\n");
 
-	size_t read = 0;
-	int32_t time = 0;
-	void *timeaddr = 0;
+	void *timeaddr = find_address((unsigned char *)TIME_PTR_SIGNATURE);
 
-	read = rpm((void *)(TIME_ADDRESS_PTR + 1), &timeaddr, sizeof(intptr_t));
+	printf("time ptr: %#x\n", timeaddr);
 
-	printf("read: %d (%#x)\n", read, (unsigned)(intptr_t)timeaddr);
+	// size_t read = 0;
+	// int32_t time = 0;
+	// void *timeaddr = 0;
 
-	read = rpm((void *)(intptr_t)(unsigned)timeaddr, &time, sizeof(int32_t));
+	// read = rpm((void *)(TIME_ADDRESS_PTR), &timeaddr, sizeof(intptr_t));
 
-	printf("read: %d (%d)\n", read, time);
+	// printf("read: %d (%#x)\n", read, (unsigned)(intptr_t)timeaddr);
+
+	// read = rpm((void *)(intptr_t)(unsigned)(intptr_t)timeaddr, &time,
+	// 	sizeof(int32_t));
+
+	// printf("read: %d (%d)\n", read, time);
 }
 
 static inline size_t rpm(void *addr, void *chunk, size_t size)
@@ -79,4 +87,19 @@ end:
 	CloseHandle(proc_list);
 
 	return proc_id;
+}
+
+void *find_address(unsigned char *signature)
+{
+	const size_t chunk_size = 4096;
+	// Disregard terminating \0.
+	const size_t sig_size = sizeof(signature) - 1;
+
+	unsigned char *chunk = malloc(chunk_size);
+
+	for (size_t i = 0; i < INT_MAX; i += chunk_size) {
+		size_t read = rpm((void *)(intptr_t)i, &chunk, chunk_size);
+	}
+
+	return NULL;
 }
