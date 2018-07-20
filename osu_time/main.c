@@ -4,11 +4,13 @@
 #include <tlhelp32.h>
 #include <inttypes.h>
 
-#define TIME_ADDRESS 		0x011E59EC // TimeAddress
-#define TIME_ADDRESS_PTR 	0xEC591E01 // P->TimeAddress
+#define TIME_ADDRESS 0x00A859EC 	// TimeAddress
+#define TIME_ADDRESS_PTR 0x0683CBF6	// P->TimeAddress
 
 unsigned long get_process_id(const char *name);
-static inline size_t rpm(HANDLE proc, void *addr, int8_t **chunk, size_t size);
+static inline size_t rpm(void *addr, void *chunk, size_t size);
+
+HANDLE proc;
 
 int main()
 {
@@ -20,7 +22,7 @@ int main()
 		
 	printf("found process with id %ld\n", proc_id);
 
-	HANDLE proc = NULL;
+	proc = NULL;
 	if (!(proc = OpenProcess(PROCESS_VM_READ, 0, proc_id))) {
 		printf("error: failed to get handle to process\n");
 		return EXIT_FAILURE;
@@ -29,18 +31,28 @@ int main()
 	printf("got handle to process\n");
 
 	size_t read = 0;
-	// int32_t time = 0;
-	intptr_t timeaddr = 0;
+	int32_t time = 0;
+	void *timeaddr = 0;
 
-	ReadProcessMemory(proc, (void *)TIME_ADDRESS_PTR, &timeaddr,
-		sizeof(intptr_t), &read);
+	read = rpm((void *)(TIME_ADDRESS_PTR + 1), &timeaddr, sizeof(intptr_t));
 
-	printf("read: %d (%#x)\n", read, (unsigned)timeaddr);
+	printf("read: %d (%#x)\n", read, (unsigned)(intptr_t)timeaddr);
 
-	/*ReadProcessMemory(proc, (void *)TIME_ADDRESS, &time,
-		sizeof(int32_t), &read);
+	read = rpm((void *)(intptr_t)(unsigned)timeaddr, &time, sizeof(int32_t));
 
-	printf("read: %d (%d)\n", read, time);*/
+	printf("read: %d (%d)\n", read, time);
+}
+
+static inline size_t rpm(void *addr, void *chunk, size_t size)
+{
+	size_t read = 0;
+
+	if (!(ReadProcessMemory(proc, addr, chunk, size, &read))) {
+		printf("reading %d at %#x failed: %d\n", size, (intptr_t)chunk,
+			GetLastError());
+	}
+
+	return read;
 }
 
 unsigned long get_process_id(const char *name)
