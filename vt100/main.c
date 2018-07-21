@@ -5,7 +5,8 @@
 
 #define DRAW_CHAR '#'
 
-/* Operations performed on the whole terminal 'screen'. */
+/* Operations performed on the whole terminal 'screen'.
+ */
 void screen_clear(void);
 
 /* Responsible for the top status bar.
@@ -14,14 +15,16 @@ void screen_clear(void);
 void status_draw();
 void status_update();
 
-/* Handling cursor movement. */
+/* Handling cursor movement.
+ */
 void curser_move_back();
 void cursor_move(int x, int y);
 void cursor_move_by(int delta_x, int delta_y);
 void cursor_pos_save();
 void cursor_pos_restore();
 
-/* Operations on specific lines. */
+/* Operations on specific lines.
+ */
 void line_erase(int line);
 
 /* Drawing functions.
@@ -35,7 +38,8 @@ void draw_square(int x, int y, int width);
 void draw_line_vertical(int x, int y, int length);
 void draw_line_horizontal(int x, int y, int length);
 
-/* Utility functions. */
+/* Utility functions.
+ */
 static inline int constrain_above(int orig, int min);
 
 // The current X and Y coordinates of the cursor.
