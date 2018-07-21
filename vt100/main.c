@@ -19,36 +19,51 @@
 void screen_clear(void);
 
 /**
+ * status_ functions are responsible for the top status bar.
+ */
+void status_draw();
+void status_update();
+
+/**
  * cursor_ functions, related to movement of the cursor.
  */
-void cursor_move(int x, int y, int back);
+void curser_move_back();
+void cursor_move(int x, int y);
 void cursor_move_by(int delta_x, int delta_y);
+
+/**
+ * line_ functions provide abstractions over line operations and codes.
+ */
+void line_erase(int line);
 
 /**
  * Utility functions.
  */
 static inline int constrain_above(int orig, int min);
 
-int cur_x;
-int cur_y;
+// The current X and Y coordinates of the cursor.
+int cur_x = 0;
+int cur_y = 0;
+
+// The previous coordinates, for convenient cursor position restoring.
+int last_x = 0;
+int last_y = 0;
+
+// Most recent warning reported by any function.
+char *last_error = NULL;
 
 int main()
 {
 	// Disable stdout buffering.
 	setbuf(stdout, NULL);
 
-	// 0/0 is home.
-	cur_x = cur_y = 0;
-
 	int i = 0;
 	while (++i) {
 		screen_clear();
 
-		cursor_move_by(i, i);
 
-		cursor_move(0, 0, 1);
-
-		sleep(1);
+		status_draw();
+		nanosleep((struct timespec[]){{1, 0}}, NULL);
 	}
 
 	return 0;
@@ -58,38 +73,67 @@ void screen_clear()
 {
 	printf("\e[2J");
 
-	cursor_move(0, 0, 0);
+	// ESC[2J should do this by itself but... yeah.
+	cursor_move(0, 0);
 }
 
-void cursor_move(int x, int y, int back)
+void cursor_move(int x, int y)
 {
-	static int old_x = 0;
-	static int old_y = 0;
-
-	if (back) {
-		printf("%d / %d", old_x, old_y);
-		return cursor_move(old_x, old_y, 0);
-	}
-
-	old_x = x;
-	old_y = y;
+	last_x = cur_x;
+	last_y = cur_y;
 
 	cur_x = constrain_above(x, 0);
 	cur_y = constrain_above(y, 0);
 
-	printf("\e[%d;%dH", x, y);
+	if (cur_x != x || cur_y != y) {
+		last_error = "attempted to move beyond cursor constraints";
+	}
+
+	printf("\e[%d;%dH", cur_x, cur_y);
 }
 
 void cursor_move_by(int delta_x, int delta_y)
 {
-	cursor_move(cur_x + delta_x, cur_y + delta_y, 0);
+	cursor_move(cur_x + delta_x, cur_y + delta_y);
 }
 
-void status_pos_update()
+void cursor_move_back()
 {
-
+	cursor_move(last_x, last_y);
 }
 
+void status_draw()
+{
+	// Since we need to move around to draw this, save beforehand.
+	int sx = cur_x, sy = cur_y;
+
+	cursor_move(0, 0);
+	printf("%3d / %-3d | %s", sx, sy, last_error);
+	cursor_move_back();
+}
+
+void status_update()
+{
+	line_erase(0);
+	status_draw();
+}
+
+void line_erase(int line)
+{
+	int y = constrain_above(line, 0);
+
+	if (y != line) {
+		last_error = "attempted to erase foreign line";
+	}
+
+	cursor_move(0, y);
+	printf("\e[2K");
+	cursor_move_back();
+}
+
+/**
+ * Return `orig` or `min` if it is not in the range of [min, Infinity[.
+ */
 static inline int constrain_above(int orig, int min)
 {
 	return orig < min ? min : orig;
