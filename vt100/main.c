@@ -5,6 +5,7 @@
 
 #define DRAW_CHAR '#'
 
+/* Operations performed on the whole terminal 'screen'. */
 void screen_clear(void);
 
 /* Responsible for the top status bar. */
@@ -70,7 +71,7 @@ void screen_clear()
 {
 	printf("\e[2J");
 
-	// ESC[2J should do this by itself but... yeah.
+	// ESC[2J should do this by itself but... yeah, it doesn't.
 	cursor_move(0, 0);
 }
 
@@ -157,6 +158,7 @@ void draw_square(int width)
 	draw_line_vertical(height - 1);
 
 	cursor_move_by(0, height);
+
 	draw_line_horizontal(width);
 	cursor_move_by(width, -height);
 	draw_line_vertical(height - 1);
