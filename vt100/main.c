@@ -5,40 +5,31 @@
 
 #define DRAW_CHAR '#'
 
-
-// void print_message(char *msg);
-// void move_cursor(int x, int y);
-// void draw_vertical_line(short length);
-// void draw_horizontal_line(short length);
-// void draw_enemy(short width, short height);
-// void move_cursor_by(short delta_x, short delta_y);
-
-/**
- * screen_ functions operate on the terminal as one construct.
- */
 void screen_clear(void);
 
-/**
- * status_ functions are responsible for the top status bar.
- */
+/* Responsible for the top status bar. */
 void status_draw();
 void status_update();
 
-/**
- * cursor_ functions, related to movement of the cursor.
- */
+/* Handling cursor movement. */
 void curser_move_back();
 void cursor_move(int x, int y);
 void cursor_move_by(int delta_x, int delta_y);
 
-/**
- * line_ functions provide abstractions over line operations and codes.
- */
+/* Operations on specific lines. */
 void line_erase(int line);
 
-/**
- * Utility functions.
+/* Drawing functions.
+ *
+ * All lengths are inclusive.
+ * All drawings start from the current curser position and reset it if needed.
+ * Shapes have their 0/0 on the top left.
  */
+void draw_square(int width);
+void draw_line_vertical(int length);
+void draw_line_horizontal(int length);
+
+/* Utility functions. */
 static inline int constrain_above(int orig, int min);
 
 // The current X and Y coordinates of the cursor.
@@ -61,8 +52,14 @@ int main()
 	while (++i) {
 		screen_clear();
 
+		cursor_move_by(i, i);
+
+		draw_square(10);
 
 		status_draw();
+
+		last_error = NULL;
+
 		nanosleep((struct timespec[]){{1, 0}}, NULL);
 	}
 
@@ -89,7 +86,7 @@ void cursor_move(int x, int y)
 		last_error = "attempted to move beyond cursor constraints";
 	}
 
-	printf("\e[%d;%dH", cur_x, cur_y);
+	printf("\e[%d;%dH", cur_y, cur_x);
 }
 
 void cursor_move_by(int delta_x, int delta_y)
@@ -131,6 +128,42 @@ void line_erase(int line)
 	cursor_move_back();
 }
 
+void draw_line_horizontal(int length)
+{
+	for (int i = 0; i < length + 1; i++) {
+		putchar(DRAW_CHAR);
+	}
+}
+
+void draw_line_vertical(int length)
+{
+	int sx = cur_x, sy = cur_y;
+
+	for (int i = 0; i < length + 1; i++) {
+		printf("%c", DRAW_CHAR);
+		cursor_move_by(0, 1);
+	}
+
+	cursor_move(sx, sy);
+}
+
+void draw_square(int width)
+{
+	// Monospace width != height, this is just an approximation.
+	int height = width / 2;
+
+	draw_line_horizontal(width);
+	cursor_move_by(0, 1);
+	draw_line_vertical(height - 1);
+
+	cursor_move_by(0, height);
+	draw_line_horizontal(width);
+	cursor_move_by(width, -height);
+	draw_line_vertical(height - 1);
+
+	cursor_move_by(-width, -1);
+}
+
 /**
  * Return `orig` or `min` if it is not in the range of [min, Infinity[.
  */
@@ -138,63 +171,3 @@ static inline int constrain_above(int orig, int min)
 {
 	return orig < min ? min : orig;
 }
-
-// void draw_enemy(short width, short height)
-// {
-// 	int old_x = cur_x, old_y = cur_y;
-
-// 	draw_vertical_line(height + 1);
-
-	// move_cursor_by((width / 2) * -1, (height / 2) * -1);
-
-	// draw_line(width);
-
-	// move_cursor_by(0, -1);
-
-	// // for (int i = 0; i < height - 2; i++) {
-	// // 	putchar(DRAW_CHAR);
-	// // 	move_cursor_by(width - 1, 0);
-
-	// // 	putchar(DRAW_CHAR);
-	// // 	move_cursor_by((width - 1) * -1, -1);
-	// // }
-
-	// draw_line(width);
-
-// 	// move_cursor(old_x, old_y);
-// }
-
-// void draw_horizontal_line(short length)
-// {
-// 	int old_x = cur_x, old_y = cur_y;
-
-// 	for (int i = 0; i < length; i++) {
-// 		putchar(DRAW_CHAR);
-// 	}
-
-// 	move_cursor(old_x, old_y);
-// }
-
-// void draw_vertical_line(short length)
-// {
-// 	int old_x = cur_x, old_y = cur_y;
-
-// 	for (int i = 0; i < length; i++) {
-// 		putchar(DRAW_CHAR);
-
-// 		move_cursor_by(0, (-1));
-// 	}
-
-// 	move_cursor(old_x, old_y);	
-// }
-
-// void print_message(char *msg)
-// {
-// 	int old_x = cur_x, old_y = cur_y;
-	
-// 	move_cursor(0, 0);
-
-// 	printf("%s", msg);
-
-// 	move_cursor(old_x, old_y);	
-// }
