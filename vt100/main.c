@@ -8,7 +8,9 @@
 /* Operations performed on the whole terminal 'screen'. */
 void screen_clear(void);
 
-/* Responsible for the top status bar. */
+/* Responsible for the top status bar.
+ * Seperated from draw_ since it is independent of the "main screen".
+ */
 void status_draw();
 void status_update();
 
@@ -16,6 +18,8 @@ void status_update();
 void curser_move_back();
 void cursor_move(int x, int y);
 void cursor_move_by(int delta_x, int delta_y);
+void cursor_pos_save();
+void cursor_pos_restore();
 
 /* Operations on specific lines. */
 void line_erase(int line);
@@ -23,12 +27,13 @@ void line_erase(int line);
 /* Drawing functions.
  *
  * All lengths are inclusive.
- * All drawings start from the current curser position and reset it if needed.
+ * All drawings start from the given position and set the cursor to that
+ * position on exit.
  * Shapes have their 0/0 on the top left.
  */
-void draw_square(int width);
-void draw_line_vertical(int length);
-void draw_line_horizontal(int length);
+void draw_square(int x, int y, int width);
+void draw_line_vertical(int x, int y, int length);
+void draw_line_horizontal(int x, int y, int length);
 
 /* Utility functions. */
 static inline int constrain_above(int orig, int min);
@@ -36,6 +41,10 @@ static inline int constrain_above(int orig, int min);
 // The current X and Y coordinates of the cursor.
 int cur_x = 0;
 int cur_y = 0;
+
+// Coordinate buffers for convenient save and restore.
+int buf_x = 0;
+int buf_y = 0;
 
 // The previous coordinates, for convenient cursor position restoring.
 int last_x = 0;
@@ -49,17 +58,16 @@ int main()
 	// Disable stdout buffering.
 	setbuf(stdout, NULL);
 
+	cursor_pos_save();
+
 	int i = 0;
 	while (++i) {
 		screen_clear();
 
-		cursor_move_by(i, i);
-
-		draw_square(10);
+		draw_square(i, i, 10);
 
 		status_draw();
-
-		last_error = NULL;
+		last_error = NULL; // Only show errors per frame.
 
 		nanosleep((struct timespec[]){{1, 0}}, NULL);
 	}
@@ -87,6 +95,8 @@ void cursor_move(int x, int y)
 		last_error = "attempted to move beyond cursor constraints";
 	}
 
+	// Note the argument order since this expects "ESC line;column H"
+	// where line is equivalent to Y and column to X.
 	printf("\e[%d;%dH", cur_y, cur_x);
 }
 
@@ -98,6 +108,19 @@ void cursor_move_by(int delta_x, int delta_y)
 void cursor_move_back()
 {
 	cursor_move(last_x, last_y);
+}
+
+void cursor_pos_save()
+{
+	buf_x = cur_x;
+	buf_y = cur_y;
+}
+
+void cursor_pos_restore()
+{
+	cursor_move(buf_x, buf_y);
+
+	buf_x = buf_y = 0;	
 }
 
 void status_draw()
@@ -129,41 +152,41 @@ void line_erase(int line)
 	cursor_move_back();
 }
 
-void draw_line_horizontal(int length)
+void draw_line_horizontal(int x, int y, int length)
 {
+	cursor_move(x, y);
+
 	for (int i = 0; i < length + 1; i++) {
 		putchar(DRAW_CHAR);
 	}
+
+	cursor_move(x, y); // Obsolete, but comply with standard.
 }
 
-void draw_line_vertical(int length)
+void draw_line_vertical(int x, int y, int length)
 {
-	int sx = cur_x, sy = cur_y;
+	cursor_move(x, y);
 
 	for (int i = 0; i < length + 1; i++) {
 		printf("%c", DRAW_CHAR);
 		cursor_move_by(0, 1);
 	}
 
-	cursor_move(sx, sy);
+	cursor_move(x, y); // See above.
 }
 
-void draw_square(int width)
+void draw_square(int x, int y, int width)
 {
 	// Monospace width != height, this is just an approximation.
 	int height = width / 2;
 
-	draw_line_horizontal(width);
-	cursor_move_by(0, 1);
-	draw_line_vertical(height - 1);
+	draw_line_horizontal(x, y, width);
+	draw_line_vertical(x, y, height - 1);
 
-	cursor_move_by(0, height);
+	draw_line_horizontal(x, y + height, width);
+	draw_line_vertical(x + width, y, height - 1);
 
-	draw_line_horizontal(width);
-	cursor_move_by(width, -height);
-	draw_line_vertical(height - 1);
-
-	cursor_move_by(-width, -1);
+	cursor_move(x, y);
 }
 
 /**
