@@ -1,6 +1,6 @@
 # c
 
-A number of little C programs created mostly to learn the language. Most of them are portable but some require GCC and Linux.
+A number of little C programs created to learn the language. Most of them are portable but some require GCC and Linux.
 
 Folders prefixed with `osu_` are related to the game [osu!](osu.ppy.sh/).
 
