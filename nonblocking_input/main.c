@@ -28,6 +28,11 @@ int main(int argc, char** argv)
 			continue;
 		}
 
+		// All event codes can be found in linux/input-event-codes.h:
+		// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/input-event-codes.h
+		// More information can be found in the following SO ansewer:
+		// https://stackoverflow.com/questions/16695432/input-event-structure-description-from-linux-input-h
+
 		switch (data.code) {
 		case KEY_SPACE: printf("space!\n");
 			break;
