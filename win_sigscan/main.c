@@ -9,7 +9,7 @@
 
 void *find_time_address();
 unsigned long get_process_id(const char *name);
-void *find_pattern(HANDLE process, unsigned char pattern[]);
+void *find_pattern(HANDLE process, unsigned char *pattern, int pattern_len);
 
 HANDLE game_proc;
 
@@ -46,7 +46,7 @@ unsigned long get_process_id(const char *name)
 	DWORD proc_id = 0;
 	HANDLE proc_list = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-	PROCESSENTRY32 entry = { 0 };
+	PROCESSENTRY32 entry = { 0 }; 
 	entry.dwSize = sizeof(PROCESSENTRY32);
 
 	if (!Process32First(proc_list, &entry)) {
@@ -67,28 +67,27 @@ end:
 	return proc_id;
 }
 
-void *find_pattern(HANDLE process, unsigned char pattern[])
+void *find_pattern(HANDLE process, unsigned char *pattern, int pattern_len)
 {
 	bool hit = false;
 	const size_t read_size = 4096;
-	const size_t signature_size = 4;
 
-	unsigned char chunk[READ_SIZE];
+	unsigned char chunk[read_size];
 
-	for (size_t i = 0; i < INT_MAX; i += read_size - signature_size) {
+	for (size_t i = 0; i < INT_MAX; i += read_size - pattern_len) {
 		ReadProcessMemory(process, (void *)i, &chunk, read_size, NULL);
 
 		for (size_t a = 0; a < read_size; a++) {
 			hit = true;
 
-			for (size_t j = 0; j < signature_size && hit; j++) {
+			for (size_t j = 0; j < pattern_len && hit; j++) {
 				if (chunk[a + j] != pattern[j]) {
 					hit = false;
 				}
 			}
 
 			if (hit) {
-				return (void *)(i + a + sizeof(SIGNATURE) - 1);
+				return (void *)(i + a + pattern_len);
 			}
 		}
 	}
@@ -99,7 +98,8 @@ void *find_pattern(HANDLE process, unsigned char pattern[])
 void *find_time_address()
 {
 	void *time_address = NULL;
-	void *time_ptr = find_pattern(game_proc, (unsigned char *)(SIGNATURE));
+	void *time_ptr = find_pattern(game_proc, (unsigned char *)(SIGNATURE),
+		sizeof(SIGNATURE) - 1);
 
 	printf("time pointer at %#x\n", (unsigned)(intptr_t)time_ptr);
 
