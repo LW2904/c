@@ -4,7 +4,9 @@ A number of little C programs created to learn the language. Most of them are po
 
 Folders prefixed with `osu_` are related to the game [osu!](osu.ppy.sh/).
 
-Folders prefixed with `win_` rely in the Windows API, anything else can be compiled with [MinGW](http://mingw.org/) or regular GCC.
+Folders prefixed with `win_` rely in the Windows API.
+
+Folders prefixed with `x11_` rely on a reasonably up to date version of the X Window System.
 
 Some of the folders contain solved exercises from the book "The C Programming Language" by K&R, these are listed below. Some of them have been altered slightly.
 
