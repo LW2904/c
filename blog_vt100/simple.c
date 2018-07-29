@@ -4,13 +4,13 @@
 
 void erase_line();
 void move_cursor(int x, int y);
-void draw_line(int x_from, int y_from, int x_to, int y_to);
+void draw_graph(int *data, int data_len);
 
 int main()
 {
 	setbuf(stdout, NULL);
 
-	draw_line(1, 1, 3, 2);
+	draw_graph((int[]){ 3, 4, 2, 5, 2 }, 5);
 
 	return 1;
 }
@@ -25,14 +25,12 @@ void erase_line()
 	printf("%c[2K", ASCII_ESC);
 }
 
-void draw_line(int x_from, int y_from, int x_to, int y_to)
+void draw_graph(int *data, int data_len)
 {
-	int width = x_to - x_from + 1;
-	int slope = ((y_to - y_from + 1) / width) * 1000;
-
-	// for (int i = 0; i <= width; i++) {
-
-	// }
-
-	printf("%d / %d\n", width, slope);
+	for (int i = 0; i < data_len; i++) {
+		for (int j = data[i]; j >= data[i]; j--) {
+			move_cursor(i + 1, 10 + j);
+			putchar('#');
+		}
+	}
 }
