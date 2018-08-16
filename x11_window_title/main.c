@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
 
@@ -10,6 +11,7 @@ pid_t get_window_pid(Window window);
 int is_window_visible(Window window);
 int is_window_match(Window window, pid_t pid);
 void search_children(pid_t pid, Window window, Window *out);
+int get_window_name(Window window, char *title, int title_len);
 unsigned char *get_window_property(Window window, Atom atom, size_t *num_items);
 
 
@@ -29,6 +31,13 @@ int main(int argc, char *argv[])
 	}
 
 	printf("window found: %d\n", (int)window);
+
+	const int name_len = 256;
+	char name[name_len];
+
+	get_window_name(window, name, name_len);
+
+	printf("window name: %s\n", name);
 
 	return 0;
 }
@@ -80,13 +89,13 @@ void search_children(pid_t pid, Window window, Window *out)
 
 int is_window_match(Window window, pid_t pid)
 {
-	pid_t window_pid = get_window_pid(window);
+	if (get_window_pid(window) != pid)
+		return 0;
 
-	if (window_pid == pid && is_window_visible(window)) {		
-		return 1;
-	}
+	if (!(is_window_visible(window)))
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 pid_t get_window_pid(Window window)
@@ -116,7 +125,7 @@ unsigned char *get_window_property(Window window, Atom atom, size_t *num_items)
 	int actual_format;
 
 	size_t bytes_after;
-	unsigned char *prop;
+	static unsigned char *prop;
 
 	int status = XGetWindowProperty(display, window, atom, 0, (~0L), 0,
 		AnyPropertyType, &actual_type, &actual_format, num_items,
@@ -148,4 +157,30 @@ int is_window_visible(Window window)
 	}
 
 	return 1;
+}
+
+int get_window_name(Window window, char *title, int title_len)
+{
+	static Atom net_name_atom = -1, name_atom = -1;
+
+	if (name_atom == (Atom)-1)
+		name_atom = XInternAtom(display, "WM_NAME", 0);
+	if (net_name_atom == (Atom)-1)
+		net_name_atom = XInternAtom(display, "_NET_WM_NAME", 0);
+
+	 // http://standards.freedesktop.org/wm-spec/1.3/ar01s05.html
+	 // Prefer _NET_WM_NAME if available, otherwise use WM_NAME
+
+	size_t num_items = 0;
+
+	unsigned char *prop = get_window_property(window, net_name_atom,
+		&num_items);
+
+	if (!num_items) {
+		prop = get_window_property(window, name_atom, &num_items);
+	}
+
+	strcpy(title, (char *)prop);
+
+	return 0;
 }
